@@ -1,0 +1,80 @@
+name: Publish dist branch
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-dist-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build output
+        run: test -f dist/index.js
+
+      - name: Force push dist branch
+        run: |
+          set -euo pipefail
+
+          node --input-type=commonjs <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const root = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          const readVersion = (name) =>
+            JSON.parse(fs.readFileSync(path.join("node_modules", name, "package.json"), "utf8")).version;
+
+          if (!fs.existsSync("dist/index.js")) {
+            throw new Error("dist/index.js does not exist");
+          }
+
+          const manifest = {
+            name: root.name,
+            version: root.version,
+            description: root.description,
+            type: "module",
+            bin: { [root.name]: "dist/index.js" },
+            main: "dist/index.js",
+            files: ["dist"],
+            engines: root.engines,
+            dependencies: {
+              "@modelcontextprotocol/server": readVersion("@modelcontextprotocol/server"),
+              zod: readVersion("zod")
+            }
+          };
+
+          fs.writeFileSync("package.json", JSON.stringify(manifest, null, 2) + "\n");
+          NODE
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout --orphan dist
+          git rm -rf --cached .
+          git add -f package.json dist README.md
+          git commit -m "build: publish dist branch"
+          git push --force origin dist

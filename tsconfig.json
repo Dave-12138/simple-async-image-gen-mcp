@@ -1,0 +1,20 @@
+{
+    "include": [
+        "src/**/*.ts",
+        "vite.config.ts"
+    ],
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true,
+        "types": [
+            "node"
+        ]
+    }
+}
