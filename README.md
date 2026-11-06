@@ -39,7 +39,7 @@ MCP 客户端配置：
 
 | 变量 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `SILICONFLOW_API_KEY` | 是 | 无 | 硅基流动 API Key。未设置时服务仍可启动，但 `generate_image` 会返回配置错误。 |
+| `SILICONFLOW_API_KEY` | 是 | 无 | 硅基流动 API Key。未设置时服务仍可启动，但调用 `generate_image` 会报错并提示配置该变量。 |
 | `SILICONFLOW_API_BASE` | 否 | `https://api.siliconflow.cn/v1` | API 根地址，通常以 `/v1` 结尾。国际站可改为 `https://api.siliconflow.com/v1`。 |
 | `SILICONFLOW_IMAGE_MODEL` | 否 | `Qwen/Qwen-Image` | 默认生图模型。模型名称需要与 API 平台支持的模型一致。 |
 | `SILICONFLOW_IMAGE_OUTPUT_DIR` | 否 | 系统缓存目录 | 图片保存目录。Linux 下默认为 `~/.cache/siliconflow-image-gen-mcp/images`。 |

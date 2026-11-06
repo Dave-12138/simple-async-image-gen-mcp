@@ -82,7 +82,7 @@ export class SiliconFlowClient {
         const apiKey = this.options.apiKey;
         if (!apiKey) {
             throw new SiliconFlowError(
-                "未设置 SILICONFLOW_API_KEY 环境变量，无法提交生图任务。请在 MCP 客户端配置中设置该变量。"
+                "配置错误：缺少 SILICONFLOW_API_KEY 环境变量，无法生成图片。请在 MCP 客户端配置中设置该变量后重启服务。"
             );
         }
 

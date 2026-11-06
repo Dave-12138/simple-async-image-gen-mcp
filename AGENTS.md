@@ -46,7 +46,7 @@
 ## Pitfalls
 
 - Node.js 版本要求 20 或更高；项目使用全局 `fetch`、`AbortController` 和 `randomUUID`。
-- 缺少 `SILICONFLOW_API_KEY` 时服务仍会启动，但 `generate_image` 返回配置错误。
+- 缺少 `SILICONFLOW_API_KEY` 时服务仍会启动，但 `generate_image` 会返回带配置提示的错误。
 - 任务记录只保存在当前进程内，服务重启后任务列表清空；已下载图片仍留在输出目录。
 - `npm start` 不会自动构建；运行前需要先执行 `npm run build`。
 - 默认输出目录在用户缓存目录下，测试必须通过 `SILICONFLOW_IMAGE_OUTPUT_DIR` 指向临时目录。

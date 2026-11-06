@@ -140,6 +140,9 @@ describe("MCP 服务器", { concurrency: false }, () => {
             tools.tools.map((tool) => tool.name).sort(),
             ["generate_image", "get_image_result", "list_image_tasks"]
         );
+        const generateTool = tools.tools.find((tool) => tool.name === "generate_image");
+        assert.ok(generateTool);
+        assert.doesNotMatch(generateTool.description, /SILICONFLOW_API_KEY|配置错误|未设置/);
 
         const startedAt = performance.now();
         const submitted = await client.callTool({
@@ -257,6 +260,8 @@ test("缺少 API Key 时服务仍可启动，提交任务返回配置错误", as
         });
         assert.equal(result.isError, true);
         assert.match(result.content[0].text, /SILICONFLOW_API_KEY/);
+        assert.match(result.content[0].text, /配置错误/);
+        assert.match(result.content[0].text, /重启服务/);
     } finally {
         await client.close().catch(() => undefined);
     }

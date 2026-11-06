@@ -60,7 +60,7 @@ export function registerImageTools(server: McpServer, config: AppConfig, store: 
         {
             title: "异步生成图片",
             description:
-                "提交一个异步生图任务并立即返回 taskId，不会等待图片生成完成。任务在后台调用硅基流动接口生成图片，并把图片下载到本地。未设置 SILICONFLOW_API_KEY 时返回配置错误。结构化结果中的 task.taskId 用于后续查询。之后用 list_image_tasks 查看进度，或用 get_image_result 获取图片。任务状态只保存在当前服务进程内，服务重启后清空。",
+                "提交一个异步生图任务并立即返回 taskId，不会等待图片生成完成。任务在后台调用硅基流动接口生成图片，并把图片下载到本地。结构化结果中的 task.taskId 用于后续查询。之后用 list_image_tasks 查看进度，或用 get_image_result 获取图片。任务状态只保存在当前服务进程内，服务重启后清空。",
             inputSchema: generateInputSchema,
             annotations: {
                 title: "异步生成图片",
@@ -73,7 +73,7 @@ export function registerImageTools(server: McpServer, config: AppConfig, store: 
         async (args) => {
             if (!config.apiKey) {
                 return toolError(
-                    "未设置 SILICONFLOW_API_KEY 环境变量，无法提交生图任务。请在 MCP 客户端配置中设置该变量后重启服务。"
+                    "配置错误：缺少 SILICONFLOW_API_KEY 环境变量，无法提交生图任务。请在 MCP 客户端配置中设置该变量后重启服务。"
                 );
             }
 
