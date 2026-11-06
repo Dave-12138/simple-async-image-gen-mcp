@@ -1,13 +1,14 @@
-# siliconflow-image-gen-mcp
+# simple-async-image-gen-mcp
 
 ## Project
 
-- 通过 stdio 提供 MCP 服务的图片生成工具，调用硅基流动图片生成接口。
+- 通过 stdio 提供 MCP 服务的异步图片生成工具，调用兼容 `/images/generations` 的图片生成接口。
 - 运行时入口是 `src/index.ts`，构建后入口是 `dist/index.js`。
 - 对外提供三个工具：`generate_image`、`list_image_tasks`、`get_image_result`。
 - 生成任务在进程内排队执行，生成完成后把图片下载到本地目录。
-- 默认生图模型是 `Qwen/Qwen-Image`，可用 `SILICONFLOW_IMAGE_MODEL` 覆盖。
-- `.github/workflows/publish-dist.yml` 在推送到 `main` 后构建，并强制推送到孤儿分支 `dist`；`dist` 分支用于 `npx -y github:Dave-12138/siliconflow-image-gen-mcp#dist`。
+- 默认生图模型是 `Qwen/Qwen-Image`，可用 `IMAGE_GEN_MODEL` 覆盖。
+- 默认 API 根地址是 `https://api.siliconflow.cn/v1`，可用 `IMAGE_GEN_API_BASE` 指向其他兼容站点。
+- `.github/workflows/publish-dist.yml` 在推送到 `main` 后构建，并强制推送到孤儿分支 `dist`；`dist` 分支用于 `npx -y github:Dave-12138/simple-async-image-gen-mcp#dist`。
 
 ## Commands
 
@@ -24,13 +25,13 @@
 ## Architecture
 
 - `src/config.ts`：读取环境变量，校验数值和 API 地址，给出默认 API 地址、默认模型和缓存目录。
-- `src/siliconflow.ts`：封装图片生成请求、超时、重试、错误解析、图片下载和图片格式识别。
+- `src/image-api.ts`：封装图片生成请求、超时、重试、错误解析、图片下载和图片格式识别。
 - `src/tasks.ts`：维护内存中的任务 Map、FIFO 队列、并发上限、任务状态和图片目录清理。
 - `src/tools.ts`：定义三个工具的 Zod 参数、文本结果和 `structuredContent`，并读取图片文件生成 MCP 图片内容。
 - `src/server.ts`：创建 `McpServer` 并注册工具。
-- `src/index.ts`：加载配置、创建 `SiliconFlowClient` 和 `TaskStore`，通过 `serveStdio` 提供 stdio 服务。
+- `src/index.ts`：加载配置、创建 `ImageApiClient` 和 `TaskStore`，通过 `serveStdio` 提供 stdio 服务。
 - `vite.config.ts`：把 `src/index.ts` 打包成单个 ESM 文件，保留 shebang，并把运行依赖和 Node 内置模块标记为外部依赖。
-- 配置测试通过 tsx 直接导入 `src/config.ts`；端到端测试通过本地模拟的 HTTP 服务和 MCP 客户端启动真实子进程，不访问硅基流动线上接口。
+- 配置测试通过 tsx 直接导入 `src/config.ts`；端到端测试通过本地模拟的 HTTP 服务和 MCP 客户端启动真实子进程，不访问线上接口。
 - `.github/workflows/publish-dist.yml`：安装依赖并构建，生成只含运行依赖的精简 `package.json`，用 `git checkout --orphan dist` 创建孤儿分支，再执行 `git push --force origin dist`。
 
 ## Conventions
@@ -38,7 +39,8 @@
 - stdout 只用于 MCP JSON-RPC 消息；日志一律写 stderr。
 - TypeScript 使用 `NodeNext` 模块解析，源码中的相对导入必须带 `.js` 扩展名。
 - 任务状态固定为 `queued`、`running`、`downloading`、`succeeded`、`failed`。
-- 调用硅基流动接口使用 snake_case 字段；工具参数和结构化结果使用 camelCase。
+- 调用图片生成接口使用 snake_case 字段；工具参数和结构化结果使用 camelCase。
+- `IMAGE_GEN_API_BASE` 可以填写根地址，也可以填写以 `/images/generations` 结尾的完整地址；缺少该后缀时服务会自动追加。
 - 工具返回值同时包含便于阅读的中文文本和 `structuredContent`；图片以 MCP image content 返回。
 - 只有调用方显式传入的模型参数才发送给接口，避免给不支持该参数的模型传默认值。
 - 面向用户的文本和代码注释使用中文。
@@ -46,10 +48,10 @@
 ## Pitfalls
 
 - Node.js 版本要求 20 或更高；项目使用全局 `fetch`、`AbortController` 和 `randomUUID`。
-- 缺少 `SILICONFLOW_API_KEY` 时服务仍会启动，但 `generate_image` 会返回带配置提示的错误。
+- 缺少 `IMAGE_GEN_API_KEY` 时服务仍会启动，但 `generate_image` 会返回带配置提示的错误。
 - 任务记录只保存在当前进程内，服务重启后任务列表清空；已下载图片仍留在输出目录。
 - `npm start` 不会自动构建；运行前需要先执行 `npm run build`。
-- 默认输出目录在用户缓存目录下，测试必须通过 `SILICONFLOW_IMAGE_OUTPUT_DIR` 指向临时目录。
+- 默认输出目录在用户缓存目录下，测试必须通过 `IMAGE_GEN_OUTPUT_DIR` 指向临时目录。
 - 批量生图的图片内容以 base64 返回，结果可能很大；需要小结果时使用 `includeImages=false` 或 `imageIndex`。
 - stdio 关闭后服务进程可能延迟数秒退出，测试不要以进程立即退出作为通过条件。
 - `npm run build` 使用 Vite 8；从源码构建需要 Node.js 20.19 或更高版本，或 22.12 及以上。

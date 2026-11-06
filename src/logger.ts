@@ -4,7 +4,7 @@ export interface Logger {
     error(message: string, error?: unknown): void;
 }
 
-export const LOG_PREFIX = "siliconflow-image-gen-mcp";
+export const LOG_PREFIX = "simple-async-image-gen-mcp";
 
 export function createLogger(prefix = LOG_PREFIX): Logger {
     const write = (level: string, message: string, error?: unknown): void => {

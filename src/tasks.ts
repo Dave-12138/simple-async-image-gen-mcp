@@ -5,11 +5,11 @@ import type { AppConfig } from "./config.js";
 import type { Logger } from "./logger.js";
 import {
     AbortedError,
-    SiliconFlowClient,
-    SiliconFlowError,
+    ImageApiClient,
+    ImageApiError,
     type DownloadedImage,
     type GenerateImageParams
-} from "./siliconflow.js";
+} from "./image-api.js";
 
 export const TASK_STATUSES = ["queued", "running", "downloading", "succeeded", "failed"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
@@ -58,7 +58,7 @@ export function isTerminalStatus(status: TaskStatus): status is "succeeded" | "f
 }
 
 export class TaskStore {
-    readonly client: SiliconFlowClient;
+    readonly client: ImageApiClient;
 
     private readonly config: AppConfig;
     private readonly logger: Logger;
@@ -68,7 +68,7 @@ export class TaskStore {
     private running = 0;
     private closed = false;
 
-    constructor(config: AppConfig, client: SiliconFlowClient, logger: Logger) {
+    constructor(config: AppConfig, client: ImageApiClient, logger: Logger) {
         this.config = config;
         this.client = client;
         this.logger = logger;
@@ -270,7 +270,7 @@ export class TaskStore {
 }
 
 function toTaskError(error: unknown): TaskError {
-    if (error instanceof SiliconFlowError) {
+    if (error instanceof ImageApiError) {
         return {
             message: error.message,
             code: error.code,

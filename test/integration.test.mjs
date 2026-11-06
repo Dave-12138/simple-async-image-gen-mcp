@@ -108,16 +108,16 @@ describe("MCP 服务器", { concurrency: false }, () => {
 
     before(async () => {
         api = await startFakeApi();
-        outputDir = await mkdtemp(path.join(tmpdir(), "siliconflow-image-gen-mcp-test-"));
+        outputDir = await mkdtemp(path.join(tmpdir(), "simple-async-image-gen-mcp-test-"));
         const env = childEnv({
-            SILICONFLOW_API_KEY: "test-key",
-            SILICONFLOW_API_BASE: `http://127.0.0.1:${api.port}/v1`,
-            SILICONFLOW_IMAGE_MODEL: "test/model",
-            SILICONFLOW_IMAGE_OUTPUT_DIR: outputDir,
-            SILICONFLOW_MAX_CONCURRENCY: "1",
-            SILICONFLOW_MAX_RETRIES: "0",
-            SILICONFLOW_REQUEST_TIMEOUT_MS: "10000",
-            SILICONFLOW_DOWNLOAD_TIMEOUT_MS: "10000"
+            IMAGE_GEN_API_KEY: "test-key",
+            IMAGE_GEN_API_BASE: `http://127.0.0.1:${api.port}/v1`,
+            IMAGE_GEN_MODEL: "test/model",
+            IMAGE_GEN_OUTPUT_DIR: outputDir,
+            IMAGE_GEN_MAX_CONCURRENCY: "1",
+            IMAGE_GEN_MAX_RETRIES: "0",
+            IMAGE_GEN_REQUEST_TIMEOUT_MS: "10000",
+            IMAGE_GEN_DOWNLOAD_TIMEOUT_MS: "10000"
         });
         ({ client, transport, stderr: stderrText } = await connectClient(env));
     });
@@ -142,7 +142,7 @@ describe("MCP 服务器", { concurrency: false }, () => {
         );
         const generateTool = tools.tools.find((tool) => tool.name === "generate_image");
         assert.ok(generateTool);
-        assert.doesNotMatch(generateTool.description, /SILICONFLOW_API_KEY|配置错误|未设置/);
+        assert.doesNotMatch(generateTool.description, /IMAGE_GEN_API_KEY|配置错误|未设置/);
 
         const startedAt = performance.now();
         const submitted = await client.callTool({
@@ -250,8 +250,8 @@ describe("MCP 服务器", { concurrency: false }, () => {
 });
 
 test("缺少 API Key 时服务仍可启动，提交任务返回配置错误", async () => {
-    const env = childEnv({ SILICONFLOW_IMAGE_OUTPUT_DIR: path.join(tmpdir(), "siliconflow-image-gen-mcp-no-key") });
-    delete env.SILICONFLOW_API_KEY;
+    const env = childEnv({ IMAGE_GEN_OUTPUT_DIR: path.join(tmpdir(), "simple-async-image-gen-mcp-no-key") });
+    delete env.IMAGE_GEN_API_KEY;
     const { client } = await connectClient(env);
     try {
         const result = await client.callTool({
@@ -259,7 +259,7 @@ test("缺少 API Key 时服务仍可启动，提交任务返回配置错误", as
             arguments: { prompt: "测试缺少 API Key" }
         });
         assert.equal(result.isError, true);
-        assert.match(result.content[0].text, /SILICONFLOW_API_KEY/);
+        assert.match(result.content[0].text, /IMAGE_GEN_API_KEY/);
         assert.match(result.content[0].text, /配置错误/);
         assert.match(result.content[0].text, /重启服务/);
     } finally {

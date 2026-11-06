@@ -3,7 +3,7 @@ import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { ConfigError, loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { createMcpServer } from "./server.js";
-import { SiliconFlowClient } from "./siliconflow.js";
+import { ImageApiClient } from "./image-api.js";
 import { TaskStore } from "./tasks.js";
 
 function main(): void {
@@ -20,7 +20,7 @@ function main(): void {
         throw error;
     }
 
-    const client = new SiliconFlowClient({
+    const client = new ImageApiClient({
         apiKey: config.apiKey,
         apiBase: config.apiBase,
         requestTimeoutMs: config.requestTimeoutMs,
@@ -34,7 +34,7 @@ function main(): void {
         `启动：API 地址 ${config.apiBase}，默认模型 ${config.defaultModel}，图片目录 ${config.outputDir}，最大并发 ${config.maxConcurrency}。`
     );
     if (!config.apiKey) {
-        logger.warn("未设置 SILICONFLOW_API_KEY，generate_image 会返回配置错误，直到设置该变量并重启服务。");
+        logger.warn("未设置 IMAGE_GEN_API_KEY，generate_image 会返回配置错误，直到设置该变量并重启服务。");
     }
 
     const handle = serveStdio(() => createMcpServer(config, store, logger), {

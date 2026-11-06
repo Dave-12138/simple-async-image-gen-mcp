@@ -1,10 +1,10 @@
 {
-  "name": "siliconflow-image-gen-mcp",
+  "name": "simple-async-image-gen-mcp",
   "version": "0.1.0",
-  "description": "通过硅基流动 API 异步生成图片的 MCP 服务器",
+  "description": "通过兼容的图片生成接口异步生成图片的 MCP 服务器",
   "type": "module",
   "bin": {
-    "siliconflow-image-gen-mcp": "dist/index.js"
+    "simple-async-image-gen-mcp": "dist/index.js"
   },
   "main": "dist/index.js",
   "files": [

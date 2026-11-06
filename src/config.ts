@@ -1,15 +1,16 @@
 import os from "node:os";
 import path from "node:path";
 
-export const SERVER_NAME = "siliconflow-image-gen-mcp";
+export const SERVER_NAME = "simple-async-image-gen-mcp";
 export const SERVER_VERSION = "0.1.0";
+/** 默认 API 根地址；其他兼容站点可以通过 IMAGE_GEN_API_BASE 覆盖。 */
 export const DEFAULT_API_BASE = "https://api.siliconflow.cn/v1";
 export const DEFAULT_IMAGE_MODEL = "Qwen/Qwen-Image";
 
 export interface AppConfig {
-    /** 硅基流动 API Key；未设置时服务可以启动，但提交任务会报错。 */
+    /** 图片生成 API Key；未设置时服务可以启动，但提交任务会报错。 */
     apiKey?: string;
-    /** 硅基流动 API 根地址，末尾不带斜杠。 */
+    /** 图片生成 API 根地址，末尾不带斜杠。 */
     apiBase: string;
     /** 调用生图接口时使用的默认模型。 */
     defaultModel: string;
@@ -36,30 +37,30 @@ export class ConfigError extends Error {
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     return {
-        apiKey: readString(env, "SILICONFLOW_API_KEY"),
-        apiBase: normalizeApiBase(readString(env, "SILICONFLOW_API_BASE") ?? DEFAULT_API_BASE),
-        defaultModel: readString(env, "SILICONFLOW_IMAGE_MODEL") ?? DEFAULT_IMAGE_MODEL,
-        outputDir: path.resolve(readString(env, "SILICONFLOW_IMAGE_OUTPUT_DIR") ?? defaultOutputDir(env)),
-        requestTimeoutMs: readInt(env, "SILICONFLOW_REQUEST_TIMEOUT_MS", 180_000, 1_000, 600_000),
-        downloadTimeoutMs: readInt(env, "SILICONFLOW_DOWNLOAD_TIMEOUT_MS", 120_000, 1_000, 600_000),
-        maxRetries: readInt(env, "SILICONFLOW_MAX_RETRIES", 2, 0, 10),
-        maxConcurrency: readInt(env, "SILICONFLOW_MAX_CONCURRENCY", 2, 1, 16),
-        maxTasks: readInt(env, "SILICONFLOW_MAX_TASKS", 200, 1, 10_000)
+        apiKey: readString(env, "IMAGE_GEN_API_KEY"),
+        apiBase: normalizeApiBase(readString(env, "IMAGE_GEN_API_BASE") ?? DEFAULT_API_BASE),
+        defaultModel: readString(env, "IMAGE_GEN_MODEL") ?? DEFAULT_IMAGE_MODEL,
+        outputDir: path.resolve(readString(env, "IMAGE_GEN_OUTPUT_DIR") ?? defaultOutputDir(env)),
+        requestTimeoutMs: readInt(env, "IMAGE_GEN_REQUEST_TIMEOUT_MS", 180_000, 1_000, 600_000),
+        downloadTimeoutMs: readInt(env, "IMAGE_GEN_DOWNLOAD_TIMEOUT_MS", 120_000, 1_000, 600_000),
+        maxRetries: readInt(env, "IMAGE_GEN_MAX_RETRIES", 2, 0, 10),
+        maxConcurrency: readInt(env, "IMAGE_GEN_MAX_CONCURRENCY", 2, 1, 16),
+        maxTasks: readInt(env, "IMAGE_GEN_MAX_TASKS", 200, 1, 10_000)
     };
 }
 
 export function defaultOutputDir(env: NodeJS.ProcessEnv = process.env, platform = process.platform): string {
     const home = env.HOME ?? env.USERPROFILE ?? os.homedir();
     if (platform === "win32" && env.LOCALAPPDATA) {
-        return path.join(env.LOCALAPPDATA, "siliconflow-image-gen-mcp", "images");
+        return path.join(env.LOCALAPPDATA, "simple-async-image-gen-mcp", "images");
     }
     if (env.XDG_CACHE_HOME) {
-        return path.join(env.XDG_CACHE_HOME, "siliconflow-image-gen-mcp", "images");
+        return path.join(env.XDG_CACHE_HOME, "simple-async-image-gen-mcp", "images");
     }
     if (platform === "darwin") {
-        return path.join(home, "Library", "Caches", "siliconflow-image-gen-mcp", "images");
+        return path.join(home, "Library", "Caches", "simple-async-image-gen-mcp", "images");
     }
-    return path.join(home, ".cache", "siliconflow-image-gen-mcp", "images");
+    return path.join(home, ".cache", "simple-async-image-gen-mcp", "images");
 }
 
 function readString(env: NodeJS.ProcessEnv, name: string): string | undefined {
@@ -91,13 +92,13 @@ function normalizeApiBase(raw: string): string {
     try {
         url = new URL(raw);
     } catch {
-        throw new ConfigError(`SILICONFLOW_API_BASE 不是合法的 URL：“${raw}”。`);
+        throw new ConfigError(`IMAGE_GEN_API_BASE 不是合法的 URL：“${raw}”。`);
     }
     if (url.protocol !== "http:" && url.protocol !== "https:") {
-        throw new ConfigError("SILICONFLOW_API_BASE 只支持 http 或 https 地址。");
+        throw new ConfigError("IMAGE_GEN_API_BASE 只支持 http 或 https 地址。");
     }
     if (url.search.length > 0 || url.hash.length > 0) {
-        throw new ConfigError("SILICONFLOW_API_BASE 不能包含查询参数或片段。");
+        throw new ConfigError("IMAGE_GEN_API_BASE 不能包含查询参数或片段。");
     }
     url.pathname = url.pathname.replace(/\/+$/, "");
     return url.toString().replace(/\/$/, "");

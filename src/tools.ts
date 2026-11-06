@@ -20,7 +20,7 @@ const generateInputSchema = z.object({
         .trim()
         .min(1)
         .optional()
-        .describe("生图模型名称，例如 Qwen/Qwen-Image、black-forest-labs/FLUX.1-schnell、Kwai-Kolors/Kolors。省略时使用 SILICONFLOW_IMAGE_MODEL，默认 Qwen/Qwen-Image。"),
+        .describe("生图模型名称，例如 Qwen/Qwen-Image、black-forest-labs/FLUX.1-schnell、Kwai-Kolors/Kolors。省略时使用 IMAGE_GEN_MODEL，默认 Qwen/Qwen-Image。"),
     negativePrompt: z.string().trim().min(1).optional().describe("反向提示词，描述不希望出现在图片中的内容。"),
     imageSize: z
         .string()
@@ -60,7 +60,7 @@ export function registerImageTools(server: McpServer, config: AppConfig, store: 
         {
             title: "异步生成图片",
             description:
-                "提交一个异步生图任务并立即返回 taskId，不会等待图片生成完成。任务在后台调用硅基流动接口生成图片，并把图片下载到本地。结构化结果中的 task.taskId 用于后续查询。之后用 list_image_tasks 查看进度，或用 get_image_result 获取图片。任务状态只保存在当前服务进程内，服务重启后清空。",
+                "提交一个异步生图任务并立即返回 taskId，不会等待图片生成完成。任务在后台调用图片生成接口生成图片，并把图片下载到本地。结构化结果中的 task.taskId 用于后续查询。之后用 list_image_tasks 查看进度，或用 get_image_result 获取图片。任务状态只保存在当前服务进程内，服务重启后清空。",
             inputSchema: generateInputSchema,
             annotations: {
                 title: "异步生成图片",
@@ -73,7 +73,7 @@ export function registerImageTools(server: McpServer, config: AppConfig, store: 
         async (args) => {
             if (!config.apiKey) {
                 return toolError(
-                    "配置错误：缺少 SILICONFLOW_API_KEY 环境变量，无法提交生图任务。请在 MCP 客户端配置中设置该变量后重启服务。"
+                    "配置错误：缺少 IMAGE_GEN_API_KEY 环境变量，无法提交生图任务。请在 MCP 客户端配置中设置该变量后重启服务。"
                 );
             }
 
@@ -406,7 +406,7 @@ function formatSucceeded(
             ? "图片内容已随本次结果返回。"
             : "本次只返回任务信息，未包含图片内容（includeImages=false）。"
     );
-    lines.push("链接由硅基流动提供，有效期约 1 小时。");
+    lines.push("图片链接由接口提供，有效期由站点决定。");
     if (warnings.length > 0) {
         lines.push("", "注意：");
         for (const warning of warnings) lines.push(`- ${warning}`);

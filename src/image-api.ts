@@ -32,7 +32,7 @@ export interface RequestContext {
     onAttempt?: (attempt: number) => void;
 }
 
-export interface SiliconFlowClientOptions {
+export interface ImageApiClientOptions {
     apiKey?: string;
     apiBase: string;
     requestTimeoutMs: number;
@@ -41,22 +41,22 @@ export interface SiliconFlowClientOptions {
     logger: Logger;
 }
 
-interface SiliconFlowErrorOptions {
+interface ImageApiErrorOptions {
     code?: string;
     status?: number;
     retryable?: boolean;
     retryAfterMs?: number;
 }
 
-export class SiliconFlowError extends Error {
+export class ImageApiError extends Error {
     readonly code?: string;
     readonly status?: number;
     readonly retryable: boolean;
     readonly retryAfterMs?: number;
 
-    constructor(message: string, options: SiliconFlowErrorOptions = {}) {
+    constructor(message: string, options: ImageApiErrorOptions = {}) {
         super(message);
-        this.name = "SiliconFlowError";
+        this.name = "ImageApiError";
         this.code = options.code;
         this.status = options.status;
         this.retryable = options.retryable ?? false;
@@ -71,18 +71,18 @@ export class AbortedError extends Error {
     }
 }
 
-export class SiliconFlowClient {
-    private readonly options: SiliconFlowClientOptions;
+export class ImageApiClient {
+    private readonly options: ImageApiClientOptions;
 
-    constructor(options: SiliconFlowClientOptions) {
+    constructor(options: ImageApiClientOptions) {
         this.options = options;
     }
 
     async generateImage(params: GenerateImageParams, context: RequestContext): Promise<GenerateImageResult> {
         const apiKey = this.options.apiKey;
         if (!apiKey) {
-            throw new SiliconFlowError(
-                "配置错误：缺少 SILICONFLOW_API_KEY 环境变量，无法生成图片。请在 MCP 客户端配置中设置该变量后重启服务。"
+            throw new ImageApiError(
+                "配置错误：缺少 IMAGE_GEN_API_KEY 环境变量，无法生成图片。请在 MCP 客户端配置中设置该变量后重启服务。"
             );
         }
 
@@ -135,11 +135,11 @@ export class SiliconFlowClient {
         );
 
         if (buffer.length === 0) {
-            throw new SiliconFlowError(`下载第 ${index} 张图片失败：服务器返回了空内容。`);
+            throw new ImageApiError(`下载第 ${index} 张图片失败：服务器返回了空内容。`);
         }
         const type = detectImageType(buffer);
         if (!type) {
-            throw new SiliconFlowError(`下载第 ${index} 张图片失败：返回的内容不是 PNG、JPEG、WebP 或 GIF 图片。`);
+            throw new ImageApiError(`下载第 ${index} 张图片失败：返回的内容不是 PNG、JPEG、WebP 或 GIF 图片。`);
         }
 
         await mkdir(destinationDir, { recursive: true });
@@ -158,11 +158,11 @@ export class SiliconFlowClient {
         try {
             payload = JSON.parse(text);
         } catch {
-            throw new SiliconFlowError("图片生成接口返回的内容不是 JSON。", { retryable: true });
+            throw new ImageApiError("图片生成接口返回的内容不是 JSON。", { retryable: true });
         }
         const record = asRecord(payload);
         if (!record) {
-            throw new SiliconFlowError("图片生成接口返回了无法识别的响应。", { retryable: true });
+            throw new ImageApiError("图片生成接口返回了无法识别的响应。", { retryable: true });
         }
 
         const rawImages = Array.isArray(record.images) ? record.images : [];
@@ -181,7 +181,7 @@ export class SiliconFlowClient {
         }
         if (imageUrls.length === 0) {
             const message = extractMessage(payload) ?? "图片生成接口没有返回图片。";
-            throw new SiliconFlowError(message, {
+            throw new ImageApiError(message, {
                 code: extractCode(payload),
                 retryable: false
             });
@@ -200,7 +200,7 @@ export class SiliconFlowClient {
         operation: (signal: AbortSignal) => Promise<T>
     ): Promise<T> {
         const maxAttempts = this.options.maxRetries + 1;
-        let lastError: SiliconFlowError | undefined;
+        let lastError: ImageApiError | undefined;
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             if (context.signal.aborted) throw new AbortedError();
@@ -221,7 +221,7 @@ export class SiliconFlowClient {
             }
         }
 
-        throw lastError ?? new SiliconFlowError(`${label}失败。`);
+        throw lastError ?? new ImageApiError(`${label}失败。`);
     }
 }
 
@@ -250,7 +250,7 @@ async function runAttempt<T>(
     } catch (error) {
         if (outerSignal.aborted) throw new AbortedError();
         if (timedOut) {
-            throw new SiliconFlowError(`${label}超时（${timeoutMs} 毫秒）。`, { retryable: true });
+            throw new ImageApiError(`${label}超时（${timeoutMs} 毫秒）。`, { retryable: true });
         }
         throw error;
     } finally {
@@ -259,17 +259,17 @@ async function runAttempt<T>(
     }
 }
 
-function normalizeError(label: string, error: unknown): SiliconFlowError {
-    if (error instanceof SiliconFlowError) {
+function normalizeError(label: string, error: unknown): ImageApiError {
+    if (error instanceof ImageApiError) {
         return error;
     }
     if (error instanceof AbortedError) {
-        return new SiliconFlowError(error.message);
+        return new ImageApiError(error.message);
     }
     if (error instanceof Error) {
-        return new SiliconFlowError(`${label}失败：${error.message}`, { retryable: true });
+        return new ImageApiError(`${label}失败：${error.message}`, { retryable: true });
     }
-    return new SiliconFlowError(`${label}失败：${String(error)}`, { retryable: true });
+    return new ImageApiError(`${label}失败：${String(error)}`, { retryable: true });
 }
 
 function endpointFor(apiBase: string): string {
@@ -277,19 +277,19 @@ function endpointFor(apiBase: string): string {
     return base.endsWith("/images/generations") ? base : `${base}/images/generations`;
 }
 
-function makeHttpError(response: Response, text: string, label: string): SiliconFlowError {
+function makeHttpError(response: Response, text: string, label: string): ImageApiError {
     const status = response.status;
     const payload = parseErrorPayload(text);
     const detail = payload.message ? `：${payload.message}` : "";
     let message = `${label}失败：HTTP ${status}${detail}`;
     if ((status === 401 || status === 403) && label === "图片生成请求") {
-        message += "。请检查 SILICONFLOW_API_KEY 是否正确。";
+        message += "。请检查 IMAGE_GEN_API_KEY 是否正确。";
     } else if (status === 404 && label === "图片生成请求") {
-        message += "。请检查 SILICONFLOW_API_BASE 和模型名称。";
+        message += "。请检查 IMAGE_GEN_API_BASE 和模型名称。";
     }
 
     const retryable = status === 408 || status === 425 || status === 429 || status >= 500;
-    return new SiliconFlowError(message, {
+    return new ImageApiError(message, {
         code: payload.code,
         status,
         retryable,
