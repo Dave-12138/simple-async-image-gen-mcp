@@ -4,13 +4,15 @@
 
 ## 关于
 
-本项目使用 DeepSeek Harness 编写。接口采用常见的 `/images/generations` 形式，默认地址指向硅基流动，其他兼容站点可以通过 `IMAGE_GEN_API_BASE` 指定。
+本项目使用 DeepSeek Harness 编写，含人量为零。README 也是大肥鱼写的，所以不是很像给人看的。
+
+接口采用常见的 `/images/generations` 形式，默认地址使用硅基流动API，其他兼容站点可以通过 `IMAGE_GEN_API_BASE` 指定。
 
 ## 使用
 
 需要 Node.js 20 或更高版本。
 
-通过 npx 启动：
+### 通过 npx 启动
 
 ```bash
 npx -y github:Dave-12138/simple-async-image-gen-mcp#dist
@@ -34,7 +36,31 @@ MCP 客户端配置：
 }
 ```
 
-`IMAGE_GEN_API_BASE` 和 `IMAGE_GEN_MODEL` 可以省略，省略时使用下表中的默认值。`npx` 首次运行会下载仓库和依赖，之后使用本地缓存。
+`IMAGE_GEN_API_BASE` 和 `IMAGE_GEN_MODEL` 可以省略，省略时使用下表中的默认值。
+
+### 通过 npm 全局安装
+
+若使用 npm 全局安装，安装后可通过 `simple-async-image-gen-mcp` 命令启动：
+
+```bash
+npm i -g github:Dave-12138/simple-async-image-gen-mcp#dist
+```
+
+MCP 客户端配置：
+
+```json
+/* 前略 */
+{
+  "command": "simple-async-image-gen-mcp",
+  "env": { /* 略 */ }
+}
+/* 后略 */
+```
+
+如果客户端无法直接找到全局命令，可以改成通过 shell 启动：
+
+- Unix：`sh -c simple-async-image-gen-mcp`
+- Windows：`cmd /c simple-async-image-gen-mcp`
 
 ## 环境变量
 

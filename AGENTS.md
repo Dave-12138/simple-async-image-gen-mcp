@@ -8,7 +8,7 @@
 - 生成任务在进程内排队执行，生成完成后把图片下载到本地目录。
 - 默认生图模型是 `Qwen/Qwen-Image`，可用 `IMAGE_GEN_MODEL` 覆盖。
 - 默认 API 根地址是 `https://api.siliconflow.cn/v1`，可用 `IMAGE_GEN_API_BASE` 指向其他兼容站点。
-- `.github/workflows/publish-dist.yml` 在推送到 `main` 后构建，并强制推送到孤儿分支 `dist`；`dist` 分支用于 `npx -y github:Dave-12138/simple-async-image-gen-mcp#dist`。
+- `.github/workflows/publish-dist.yml` 在推送到 `main` 后构建，并强制推送到孤儿分支 `dist`；`dist` 分支用于 `npx -y github:Dave-12138/simple-async-image-gen-mcp#dist` 和 `npm i -g github:Dave-12138/simple-async-image-gen-mcp#dist`。
 
 ## Commands
 
