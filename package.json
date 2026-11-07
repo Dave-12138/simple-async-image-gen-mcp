@@ -1,0 +1,20 @@
+{
+  "name": "simple-async-image-gen-mcp",
+  "version": "0.1.0",
+  "description": "通过兼容的图片生成接口异步生成图片的 MCP 服务器",
+  "type": "module",
+  "bin": {
+    "simple-async-image-gen-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.4.0",
+    "zod": "4.6.7"
+  }
+}
